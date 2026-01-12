@@ -1,19 +1,19 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getSupabase } from '@/lib/supabase'
 import { Task, TodoItem } from '@/types'
 
 export function useTasks() {
   const [tasks, setTasksState] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Fetch tasks on mount
   useEffect(() => {
     fetchTasks()
   }, [])
 
   const fetchTasks = async () => {
+    const supabase = getSupabase()
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
@@ -33,25 +33,19 @@ export function useTasks() {
   }
 
   const setTasks = useCallback(async (newTasks: Task[]) => {
+    const supabase = getSupabase()
     const currentIds = tasks.map(t => t.id)
     const newIds = newTasks.map(t => t.id)
 
-    // Find deleted tasks
     const deletedIds = currentIds.filter(id => !newIds.includes(id))
-
-    // Find added tasks
     const addedTasks = newTasks.filter(t => !currentIds.includes(t.id))
-
-    // Find updated tasks
     const updatedTasks = newTasks.filter(t => {
       const existing = tasks.find(e => e.id === t.id)
       return existing && (existing.status !== t.status || existing.title !== t.title)
     })
 
-    // Update local state immediately for responsiveness
     setTasksState(newTasks)
 
-    // Sync with Supabase
     if (deletedIds.length > 0) {
       await supabase.from('tasks').delete().in('id', deletedIds)
     }
@@ -85,6 +79,7 @@ export function useTodos() {
   }, [])
 
   const fetchTodos = async () => {
+    const supabase = getSupabase()
     const { data, error } = await supabase
       .from('todos')
       .select('*')
@@ -103,6 +98,7 @@ export function useTodos() {
   }
 
   const setTodos = useCallback(async (newTodos: TodoItem[]) => {
+    const supabase = getSupabase()
     const currentIds = todos.map(t => t.id)
     const newIds = newTodos.map(t => t.id)
 
@@ -146,6 +142,7 @@ export function useNotes() {
   }, [])
 
   const fetchNotes = async () => {
+    const supabase = getSupabase()
     const { data, error } = await supabase
       .from('notes')
       .select('*')
@@ -161,6 +158,7 @@ export function useNotes() {
   }
 
   const setNotes = useCallback(async (newNotes: string) => {
+    const supabase = getSupabase()
     setNotesState(newNotes)
 
     await supabase
