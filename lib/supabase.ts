@@ -2,10 +2,10 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 let supabaseInstance: SupabaseClient | null = null
 
-export function getSupabase(): SupabaseClient {
+export function getSupabase(): SupabaseClient | null {
+  // Only create client in browser
   if (typeof window === 'undefined') {
-    // During SSR/build, return a dummy client that won't be used
-    return createClient('https://placeholder.supabase.co', 'placeholder')
+    return null
   }
 
   if (supabaseInstance) {
@@ -17,7 +17,7 @@ export function getSupabase(): SupabaseClient {
 
   if (!supabaseUrl || !supabaseAnonKey) {
     console.error('Missing Supabase environment variables')
-    return createClient('https://placeholder.supabase.co', 'placeholder')
+    return null
   }
 
   supabaseInstance = createClient(supabaseUrl, supabaseAnonKey)

@@ -9,28 +9,33 @@ export function useTasks() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const supabase = getSupabase()
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
+
+    const fetchTasks = async () => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .order('created_at', { ascending: true })
+
+      if (error) {
+        console.error('Error fetching tasks:', error)
+      } else {
+        setTasksState(data.map(t => ({
+          id: t.id,
+          title: t.title,
+          status: t.status as Task['status'],
+          createdAt: t.created_at
+        })))
+      }
+      setLoading(false)
+    }
+
     fetchTasks()
   }, [])
-
-  const fetchTasks = async () => {
-    const supabase = getSupabase()
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .order('created_at', { ascending: true })
-
-    if (error) {
-      console.error('Error fetching tasks:', error)
-    } else {
-      setTasksState(data.map(t => ({
-        id: t.id,
-        title: t.title,
-        status: t.status as Task['status'],
-        createdAt: t.created_at
-      })))
-    }
-    setLoading(false)
-  }
 
   const setTasks = useCallback(async (newTasks: Task[]) => {
     const supabase = getSupabase()
@@ -45,6 +50,8 @@ export function useTasks() {
     })
 
     setTasksState(newTasks)
+
+    if (!supabase) return
 
     if (deletedIds.length > 0) {
       await supabase.from('tasks').delete().in('id', deletedIds)
@@ -75,27 +82,32 @@ export function useTodos() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const supabase = getSupabase()
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
+
+    const fetchTodos = async () => {
+      const { data, error } = await supabase
+        .from('todos')
+        .select('*')
+        .order('created_at', { ascending: true })
+
+      if (error) {
+        console.error('Error fetching todos:', error)
+      } else {
+        setTodosState(data.map(t => ({
+          id: t.id,
+          text: t.text,
+          completed: t.completed
+        })))
+      }
+      setLoading(false)
+    }
+
     fetchTodos()
   }, [])
-
-  const fetchTodos = async () => {
-    const supabase = getSupabase()
-    const { data, error } = await supabase
-      .from('todos')
-      .select('*')
-      .order('created_at', { ascending: true })
-
-    if (error) {
-      console.error('Error fetching todos:', error)
-    } else {
-      setTodosState(data.map(t => ({
-        id: t.id,
-        text: t.text,
-        completed: t.completed
-      })))
-    }
-    setLoading(false)
-  }
 
   const setTodos = useCallback(async (newTodos: TodoItem[]) => {
     const supabase = getSupabase()
@@ -110,6 +122,8 @@ export function useTodos() {
     })
 
     setTodosState(newTodos)
+
+    if (!supabase) return
 
     if (deletedIds.length > 0) {
       await supabase.from('todos').delete().in('id', deletedIds)
@@ -138,28 +152,35 @@ export function useNotes() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const supabase = getSupabase()
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
+
+    const fetchNotes = async () => {
+      const { data, error } = await supabase
+        .from('notes')
+        .select('*')
+        .eq('id', '00000000-0000-0000-0000-000000000001')
+        .single()
+
+      if (error) {
+        console.error('Error fetching notes:', error)
+      } else if (data) {
+        setNotesState(data.content || '')
+      }
+      setLoading(false)
+    }
+
     fetchNotes()
   }, [])
 
-  const fetchNotes = async () => {
-    const supabase = getSupabase()
-    const { data, error } = await supabase
-      .from('notes')
-      .select('*')
-      .eq('id', '00000000-0000-0000-0000-000000000001')
-      .single()
-
-    if (error) {
-      console.error('Error fetching notes:', error)
-    } else if (data) {
-      setNotesState(data.content || '')
-    }
-    setLoading(false)
-  }
-
   const setNotes = useCallback(async (newNotes: string) => {
-    const supabase = getSupabase()
     setNotesState(newNotes)
+
+    const supabase = getSupabase()
+    if (!supabase) return
 
     await supabase
       .from('notes')
