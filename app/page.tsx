@@ -1,16 +1,17 @@
 'use client'
 
-import { useLocalStorage } from '@/hooks/useLocalStorage'
+import { useTasks, useTodos, useNotes } from '@/hooks/useSupabase'
 import { TodoList } from '@/components/TodoList/TodoList'
 import { KanbanBoard } from '@/components/Kanban/KanbanBoard'
 import { NotesPanel } from '@/components/Notes/NotesPanel'
-import { Task, TodoItem } from '@/types'
 import styles from './page.module.css'
 
 export default function Home() {
-  const [todos, setTodos] = useLocalStorage<TodoItem[]>('stride-todos', [])
-  const [tasks, setTasks] = useLocalStorage<Task[]>('stride-tasks', [])
-  const [notes, setNotes] = useLocalStorage<string>('stride-notes', '')
+  const { todos, setTodos, loading: todosLoading } = useTodos()
+  const { tasks, setTasks, loading: tasksLoading } = useTasks()
+  const { notes, setNotes, loading: notesLoading } = useNotes()
+
+  const isLoading = todosLoading || tasksLoading || notesLoading
 
   return (
     <div className={styles.app}>
@@ -19,15 +20,21 @@ export default function Home() {
         <span className={styles.tagline}>Momentum you can see</span>
       </header>
       <main className={styles.main}>
-        <div className={styles.sidebar}>
-          <TodoList todos={todos} setTodos={setTodos} />
-        </div>
-        <div className={styles.center}>
-          <KanbanBoard tasks={tasks} setTasks={setTasks} />
-        </div>
-        <div className={styles.sidebar}>
-          <NotesPanel notes={notes} setNotes={setNotes} />
-        </div>
+        {isLoading ? (
+          <div className={styles.loading}>Loading...</div>
+        ) : (
+          <>
+            <div className={styles.sidebar}>
+              <TodoList todos={todos} setTodos={setTodos} />
+            </div>
+            <div className={styles.center}>
+              <KanbanBoard tasks={tasks} setTasks={setTasks} />
+            </div>
+            <div className={styles.sidebar}>
+              <NotesPanel notes={notes} setNotes={setNotes} />
+            </div>
+          </>
+        )}
       </main>
     </div>
   )
