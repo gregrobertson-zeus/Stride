@@ -12,8 +12,8 @@ export function getSupabase(): SupabaseClient | null {
     return supabaseInstance
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const supabaseUrl = process.env.NEXT_PUBLIC_SB_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SB_KEY
 
   if (!supabaseUrl || !supabaseAnonKey) {
     console.error('Missing Supabase environment variables')
