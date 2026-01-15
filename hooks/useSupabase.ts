@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { getSupabase } from '@/lib/supabase'
-import { Task, TodoItem, ArchivedTask, ArchivedBatch } from '@/types'
+import { Task, TodoItem, ArchivedTask, ArchivedBatch, TaskComment } from '@/types'
 
 export function useTasks() {
   const [tasks, setTasksState] = useState<Task[]>([])
@@ -275,4 +275,83 @@ export function useArchivedTasks() {
   }, [archivedTasks])
 
   return { archivedTasks, archivedBatches, archiveTasks, loading }
+}
+
+export function useTaskComments() {
+  const [commentsByTask, setCommentsByTask] = useState<Record<string, TaskComment[]>>({})
+  const [loadingTasks, setLoadingTasks] = useState<Set<string>>(new Set())
+
+  const fetchComments = useCallback(async (taskId: string) => {
+    if (commentsByTask[taskId] || loadingTasks.has(taskId)) return
+
+    const supabase = getSupabase()
+    if (!supabase) return
+
+    setLoadingTasks(prev => new Set(prev).add(taskId))
+
+    const { data, error } = await supabase
+      .from('task_comments')
+      .select('*')
+      .eq('task_id', taskId)
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      console.error('Error fetching comments:', error)
+    } else {
+      setCommentsByTask(prev => ({
+        ...prev,
+        [taskId]: data.map(c => ({
+          id: c.id,
+          taskId: c.task_id,
+          content: c.content,
+          createdAt: new Date(c.created_at).getTime()
+        }))
+      }))
+    }
+
+    setLoadingTasks(prev => {
+      const next = new Set(prev)
+      next.delete(taskId)
+      return next
+    })
+  }, [commentsByTask, loadingTasks])
+
+  const addComment = useCallback(async (taskId: string, content: string) => {
+    const supabase = getSupabase()
+    if (!supabase || !content.trim()) return
+
+    const { data, error } = await supabase
+      .from('task_comments')
+      .insert({
+        task_id: taskId,
+        content: content.trim()
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error adding comment:', error)
+    } else {
+      const newComment: TaskComment = {
+        id: data.id,
+        taskId: data.task_id,
+        content: data.content,
+        createdAt: new Date(data.created_at).getTime()
+      }
+      setCommentsByTask(prev => ({
+        ...prev,
+        [taskId]: [...(prev[taskId] || []), newComment]
+      }))
+    }
+  }, [])
+
+  const getComments = useCallback((taskId: string) => {
+    return commentsByTask[taskId] || []
+  }, [commentsByTask])
+
+  const getCommentCount = useCallback((taskId: string) => {
+    return (commentsByTask[taskId] || []).length
+  }, [commentsByTask])
+
+  return { fetchComments, addComment, getComments, getCommentCount }
 }

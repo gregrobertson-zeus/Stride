@@ -26,3 +26,10 @@ export interface ArchivedBatch {
   archivedAt: number;
   tasks: ArchivedTask[];
 }
+
+export interface TaskComment {
+  id: string;
+  taskId: string;
+  content: string;
+  createdAt: number;
+}
