@@ -15,6 +15,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Task, TaskStatus } from '@/types'
 import { KanbanColumn } from './KanbanColumn'
 import { useCelebration } from '@/hooks/useCelebration'
+import { useArchivedTasks } from '@/hooks/useSupabase'
 import styles from './Kanban.module.css'
 
 interface Props {
@@ -31,6 +32,7 @@ export function KanbanBoard({ tasks, setTasks }: Props) {
   const [isClearing, setIsClearing] = useState(false)
   const dragStartStatusRef = useRef<TaskStatus | null>(null)
   const { celebrate, megaCelebrate } = useCelebration()
+  const { archivedBatches, archiveTasks } = useArchivedTasks()
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -51,6 +53,9 @@ export function KanbanBoard({ tasks, setTasks }: Props) {
       setTimeout(() => {
         megaCelebrate()
 
+        // Archive tasks before removing them
+        archiveTasks(completedTasks)
+
         // Animate cards out then remove them
         setTimeout(() => {
           // Remove completed tasks
@@ -59,7 +64,7 @@ export function KanbanBoard({ tasks, setTasks }: Props) {
         }, 1500)
       }, 300)
     }
-  }, [tasks, isClearing, megaCelebrate, setTasks])
+  }, [tasks, isClearing, megaCelebrate, setTasks, archiveTasks])
 
   const addTask = (title: string, status: TaskStatus) => {
     const task: Task = {
@@ -173,6 +178,7 @@ export function KanbanBoard({ tasks, setTasks }: Props) {
             onDeleteTask={deleteTask}
             celebrateTaskId={celebrateTaskId}
             isClearing={status === 'complete' && isClearing}
+            archivedBatches={status === 'complete' ? archivedBatches : undefined}
           />
         ))}
       </div>

@@ -213,5 +213,38 @@ export function useCelebration() {
     createMegaParticles()
   }, [playVictoryFanfare, createMegaParticles])
 
-  return { celebrate, megaCelebrate }
+  const playWhoosh = useCallback(() => {
+    try {
+      const ctx = getAudioContext()
+
+      const oscillator = ctx.createOscillator()
+      const gainNode = ctx.createGain()
+      const filter = ctx.createBiquadFilter()
+
+      oscillator.connect(filter)
+      filter.connect(gainNode)
+      gainNode.connect(ctx.destination)
+
+      oscillator.type = 'sawtooth'
+      oscillator.frequency.setValueAtTime(800, ctx.currentTime)
+      oscillator.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.25)
+
+      filter.type = 'bandpass'
+      filter.frequency.setValueAtTime(2000, ctx.currentTime)
+      filter.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.25)
+      filter.Q.value = 2
+
+      gainNode.gain.setValueAtTime(0, ctx.currentTime)
+      gainNode.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.03)
+      gainNode.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.15)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3)
+
+      oscillator.start(ctx.currentTime)
+      oscillator.stop(ctx.currentTime + 0.35)
+    } catch (e) {
+      console.log('Audio not available:', e)
+    }
+  }, [getAudioContext])
+
+  return { celebrate, megaCelebrate, playWhoosh }
 }

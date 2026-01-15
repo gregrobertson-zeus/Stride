@@ -12,3 +12,17 @@ export interface TodoItem {
 }
 
 export type TaskStatus = 'todo' | 'in-progress' | 'complete';
+
+export interface ArchivedTask {
+  id: string;
+  title: string;
+  originalCreatedAt: number;
+  archivedAt: number;
+  batchId: string;
+}
+
+export interface ArchivedBatch {
+  batchId: string;
+  archivedAt: number;
+  tasks: ArchivedTask[];
+}

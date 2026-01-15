@@ -60,3 +60,32 @@
   color: var(--text-muted);
   font-style: italic;
 }
+
+.notesDisplay {
+  flex: 1;
+  padding: 18px;
+  background: var(--bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: text;
+  overflow-y: auto;
+  transition: all 0.2s ease;
+}
+
+.notesDisplay:hover {
+  border-color: var(--border);
+}
+
+.notesText {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 14px;
+}

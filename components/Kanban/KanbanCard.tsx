@@ -3,6 +3,7 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Task } from '@/types'
+import { Linkify } from '@/components/Linkify'
 import styles from './Kanban.module.css'
 
 interface Props {
@@ -38,7 +39,7 @@ export function KanbanCard({ task, onDelete, isCelebrating, isClearing, clearDel
       {...attributes}
       {...listeners}
     >
-      <span className={styles.cardTitle}>{task.title}</span>
+      <Linkify text={task.title} className={styles.cardTitle} />
       <button
         className={styles.cardDelete}
         onClick={(e) => {

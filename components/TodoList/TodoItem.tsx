@@ -1,6 +1,7 @@
 'use client'
 
 import { TodoItem as TodoItemType } from '@/types'
+import { Linkify } from '@/components/Linkify'
 import styles from './TodoList.module.css'
 
 interface Props {
@@ -15,9 +16,7 @@ export function TodoItem({ item, onToggle, onDelete }: Props) {
       <div className={`${styles.checkbox} ${item.completed ? styles.checked : ''}`}>
         {item.completed && <span className={styles.checkmark}>✓</span>}
       </div>
-      <span className={`${styles.text} ${item.completed ? styles.completed : ''}`}>
-        {item.text}
-      </span>
+      <Linkify text={item.text} className={`${styles.text} ${item.completed ? styles.completed : ''}`} />
       <button
         className={styles.deleteButton}
         onClick={(e) => {

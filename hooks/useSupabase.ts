@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { getSupabase } from '@/lib/supabase'
-import { Task, TodoItem } from '@/types'
+import { Task, TodoItem, ArchivedTask, ArchivedBatch } from '@/types'
 
 export function useTasks() {
   const [tasks, setTasksState] = useState<Task[]>([])
@@ -189,4 +189,90 @@ export function useNotes() {
   }, [])
 
   return { notes, setNotes, loading }
+}
+
+export function useArchivedTasks() {
+  const [archivedTasks, setArchivedTasksState] = useState<ArchivedTask[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const supabase = getSupabase()
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
+
+    const fetchArchivedTasks = async () => {
+      const { data, error } = await supabase
+        .from('archived_tasks')
+        .select('*')
+        .order('archived_at', { ascending: false })
+        .limit(50)
+
+      if (error) {
+        console.error('Error fetching archived tasks:', error)
+      } else {
+        setArchivedTasksState(data.map(t => ({
+          id: t.id,
+          title: t.title,
+          originalCreatedAt: new Date(t.original_created_at).getTime(),
+          archivedAt: new Date(t.archived_at).getTime(),
+          batchId: t.batch_id
+        })))
+      }
+      setLoading(false)
+    }
+
+    fetchArchivedTasks()
+  }, [])
+
+  const archiveTasks = useCallback(async (tasks: Task[]) => {
+    const supabase = getSupabase()
+    if (!supabase || tasks.length === 0) return
+
+    const batchId = crypto.randomUUID()
+    const archivedAt = new Date().toISOString()
+
+    const archiveData = tasks.map(task => ({
+      id: task.id,
+      title: task.title,
+      original_created_at: new Date(task.createdAt).toISOString(),
+      archived_at: archivedAt,
+      batch_id: batchId
+    }))
+
+    const { error } = await supabase.from('archived_tasks').insert(archiveData)
+
+    if (error) {
+      console.error('Error archiving tasks:', error)
+    } else {
+      const newArchivedTasks: ArchivedTask[] = tasks.map(task => ({
+        id: task.id,
+        title: task.title,
+        originalCreatedAt: task.createdAt,
+        archivedAt: new Date(archivedAt).getTime(),
+        batchId
+      }))
+      setArchivedTasksState(prev => [...newArchivedTasks, ...prev])
+    }
+  }, [])
+
+  const archivedBatches = useMemo(() => {
+    const batches = new Map<string, ArchivedBatch>()
+
+    archivedTasks.forEach(task => {
+      if (!batches.has(task.batchId)) {
+        batches.set(task.batchId, {
+          batchId: task.batchId,
+          archivedAt: task.archivedAt,
+          tasks: []
+        })
+      }
+      batches.get(task.batchId)!.tasks.push(task)
+    })
+
+    return Array.from(batches.values()).sort((a, b) => b.archivedAt - a.archivedAt)
+  }, [archivedTasks])
+
+  return { archivedTasks, archivedBatches, archiveTasks, loading }
 }
